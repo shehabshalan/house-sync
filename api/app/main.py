@@ -16,7 +16,7 @@ def main():
         host=settings.HOST,
         reload=settings.DEBUG_MODE,
         port=settings.PORT,
-        log_config="./log_config.yaml",
+        log_config=settings.LOGGING_CONFIG,
     )
 
 

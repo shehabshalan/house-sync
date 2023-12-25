@@ -3,7 +3,8 @@ from pydantic_settings import BaseSettings
 
 class CommonSettings(BaseSettings):
     APP_NAME: str = "HouseSync"
-    DEBUG_MODE: bool = False
+    DEBUG_MODE: bool = True
+    LOGGING_CONFIG: str = "./log_config.yaml"
 
 
 class ServerSettings(BaseSettings):
