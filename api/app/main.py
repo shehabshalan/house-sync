@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 import uvicorn
 from app.config import settings
 from app.db import init_db
-from app.routers import auth, user
+from app.routers import auth, space, user
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -36,6 +36,7 @@ async def healthcheck():
 
 app.include_router(router=user.router)
 app.include_router(router=auth.router)
+app.include_router(router=space.router)
 
 
 def main():
