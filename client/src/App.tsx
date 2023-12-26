@@ -4,7 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import Router from "./routes/Router";
 import { useEffect } from "react";
-import { handleCallbackResponse, initGoogleAuth } from "./utils/utils";
+import { initGoogleAuth } from "./utils/utils";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -15,7 +15,7 @@ const queryClient = new QueryClient({
 });
 function App() {
   useEffect(() => {
-    initGoogleAuth(handleCallbackResponse);
+    initGoogleAuth();
   }, []);
 
   return (

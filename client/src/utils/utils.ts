@@ -4,11 +4,7 @@ export const getToken = () => {
   return token;
 };
 
-export const handleCallbackResponse = (response: any) => {
-  const token = response.credential;
-  return token;
-};
-export const initGoogleAuth = async (callback: (response: any) => void) => {
+export const initGoogleAuth = async (callback?: (response: any) => void) => {
   window.google.accounts.id.initialize({
     client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
     callback: callback,

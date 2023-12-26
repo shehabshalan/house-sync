@@ -4,11 +4,7 @@ import { useGetUser } from "@/services/useGetUser";
 import SpaceCard from "@/components/SpaceCard";
 
 const Dashboard = () => {
-  const { data, isLoading, isError } = useGetUser();
-  console.log("data", data);
-  console.log("isLoading", isLoading);
-  console.log("isError", isError);
-
+  const { data } = useGetUser();
   return (
     <Layout user={data}>
       <div className="max-w-6xl w-full mx-auto flex items-center gap-4">

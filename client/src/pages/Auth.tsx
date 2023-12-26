@@ -1,13 +1,9 @@
 import { useAuth } from "@/services/useAuth";
 import { initGoogleAuth } from "@/utils/utils";
-import { jwtDecode } from "jwt-decode";
 import { useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 
-import { useNavigate } from "react-router";
-
 const Auth = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const { mutate } = useAuth();
 
@@ -16,9 +12,7 @@ const Auth = () => {
     mutate(token, {
       onSuccess(data) {
         localStorage.setItem("token", data.token);
-        const user = jwtDecode(data.token);
-        localStorage.setItem("user", JSON.stringify(user));
-        navigate("/");
+        window.location.href = "/dashboard";
       },
       onError(e: Error & { response?: any }) {
         toast({
