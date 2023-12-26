@@ -1,17 +1,30 @@
-import { useState } from "react";
 import "./App.css";
-import { Button } from "@/components/ui/button";
-
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter } from "react-router-dom";
+import { Toaster } from "@/components/ui/toaster";
+import Router from "./routes/Router";
+import { useEffect } from "react";
+import { handleCallbackResponse, initGoogleAuth } from "./utils/utils";
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 1000 * 60, // 5 minutes
+      retry: false,
+    },
+  },
+});
 function App() {
-  const [count, setCount] = useState(0);
+  useEffect(() => {
+    initGoogleAuth(handleCallbackResponse);
+  }, []);
 
   return (
-    <>
-      <h1>Vite + React</h1>
-      <Button onClick={() => setCount((count) => count + 1)}>
-        count is {count}
-      </Button>
-    </>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <Router />
+        <Toaster />
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 }
 
