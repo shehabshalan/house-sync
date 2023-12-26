@@ -2,6 +2,7 @@ import { useAuth } from "@/services/useAuth";
 import { initGoogleAuth } from "@/utils/utils";
 import { useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import { ROUTES } from "@/routes/Routes";
 
 const Auth = () => {
   const { toast } = useToast();
@@ -12,7 +13,7 @@ const Auth = () => {
     mutate(token, {
       onSuccess(data) {
         localStorage.setItem("token", data.token);
-        window.location.href = "/dashboard";
+        window.location.href = ROUTES.DASHBOARD;
       },
       onError(e: Error & { response?: any }) {
         toast({

@@ -2,15 +2,15 @@ import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { ROUTES } from "./Routes";
 import ProtectedRoute from "@/ProtectedRoute";
-import { Loader2 } from "lucide-react";
 import NotFound from "@/pages/NotFound";
+import Loading from "@/components/Loading";
 
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const Auth = lazy(() => import("@/pages/Auth"));
 
 const Router = () => {
   return (
-    <Suspense fallback={<Loader2 />}>
+    <Suspense fallback={<Loading />}>
       <Routes>
         <Route
           path={ROUTES.DASHBOARD}

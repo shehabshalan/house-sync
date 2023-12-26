@@ -2,7 +2,7 @@ import { generatePath } from "react-router";
 
 export const ROUTES = {
   ROOT: "/",
-  DASHBOARD: "/dashboard",
+  DASHBOARD: "/dashboard/spaces",
   AUTH: "/auth",
   NOT_FOUND: "/notFound",
   BUGGY: "/buggy",
