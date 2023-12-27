@@ -11,6 +11,9 @@ const request = axios.create({
   headers: {
     Accept: "application/json",
   },
+  params: {
+    token: getToken() || "",
+  },
 });
 
 request.interceptors.request.use(
