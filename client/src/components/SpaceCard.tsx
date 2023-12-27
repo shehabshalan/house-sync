@@ -9,21 +9,26 @@ import { HomeIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 // import { Badge } from "./ui/badge";
 
-const SpaceCard = () => {
+const SpaceCard = ({ space }: { space: Space }) => {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center gap-4">
         <HomeIcon className="w-8 h-8" />
         <div className="grid gap-1">
-          <CardTitle>Space 1</CardTitle>
-          <CardDescription>100 Members</CardDescription>
+          <CardTitle>{space.name}</CardTitle>
+          <CardDescription>{space.users.length} Members</CardDescription>
         </div>
       </CardHeader>
       <CardContent className="flex items-center gap-2">
-        <Avatar>
-          <AvatarImage alt="@jaredpalmer" src="/placeholder-avatar.jpg" />
-          <AvatarFallback>JP</AvatarFallback>
-        </Avatar>
+        {space.users.slice(0, 5).map((user) => (
+          <Avatar key={user.id}>
+            <AvatarImage
+              alt={user.name}
+              src={user.picture || "/placeholder-avatar.jpg"}
+            />
+            <AvatarFallback>{user.name}</AvatarFallback>
+          </Avatar>
+        ))}
         {/* <Badge>Active</Badge> */}
       </CardContent>
     </Card>

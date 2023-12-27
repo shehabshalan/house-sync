@@ -15,16 +15,26 @@ async def auth(token: UserToken, session: Session = Depends(get_session)):
     if not user_info:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     user = session.exec(select(User).where(User.email == user_info["email"])).first()
+
     if not user:
         user = User(
-            id=user_info["sub"],
             email=user_info["email"],
             name=user_info["name"],
             picture=user_info["picture"],
+            is_active=True,
         )
         session.add(user)
         session.commit()
         session.refresh(user)
+
+    if user.is_active is False:
+        user.is_active = True
+        user.name = user_info["name"]
+        user.picture = user_info["picture"]
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+
     jwt_payload = user.model_dump()
     token = generate_access_token(jwt_payload)
     return {"token": token, **user.model_dump()}

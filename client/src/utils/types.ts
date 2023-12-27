@@ -5,3 +5,10 @@ type User = {
   picture: string;
   token: string;
 };
+
+type Space = {
+  id: string;
+  name: string;
+  description: string;
+  users: User[];
+};
