@@ -23,9 +23,17 @@ export function AddSpace() {
   const { mutate, isPending } = useCreateSpace();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  //   const [isOpen, setIsOpen] = useState(false);
 
   const handleSubmit = () => {
+    if (!name || !description) {
+      toast({
+        variant: "destructive",
+        title: "Name and description are required",
+        description: "Please fill out both fields.",
+      });
+      return;
+    }
+
     mutate(
       { name, description },
       {
@@ -37,7 +45,7 @@ export function AddSpace() {
             title: "Space created",
           });
           queryClient.invalidateQueries({ queryKey: ["spaces"] });
-          //   setIsOpen(false);
+          document.getElementById("closeDialog")?.click();
         },
         onError: (e: Error & { response?: any }) => {
           toast({
@@ -48,7 +56,6 @@ export function AddSpace() {
         },
       }
     );
-    console.log(name, description);
   };
   return (
     <Dialog>
@@ -77,7 +84,7 @@ export function AddSpace() {
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="description" className="text-right">
-              description
+              Description
             </Label>
             <Input
               id="description"
@@ -89,7 +96,7 @@ export function AddSpace() {
         </div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button type="submit" variant="outline">
+            <Button type="submit" variant="outline" id="closeDialog">
               Close
             </Button>
           </DialogClose>
