@@ -1,3 +1,5 @@
+from typing import List
+
 from pydantic import BaseModel
 
 
@@ -6,23 +8,29 @@ class UserToken(BaseModel):
 
 
 class User(BaseModel):
-    id: str
     email: str
-    name: str
-    picture: str
+    name: str | None = None
+    picture: str | None = None
+    is_active: bool
 
 
 class UserResponse(UserToken, User):
     pass
 
 
-class SpaceResponse(BaseModel):
-    id: str
+class GetSpace(BaseModel):
+    id: int
     name: str
     description: str
-    picture: str
-    owner_id: str
-    owner_name: str
-    owner_picture: str
-    created_at: str
-    updated_at: str
+    owner_email: str
+    users: List[User]
+
+
+class CreateSpace(BaseModel):
+    name: str
+    description: str
+
+
+class InviteUser(BaseModel):
+    space_id: int
+    emails: List[str]
