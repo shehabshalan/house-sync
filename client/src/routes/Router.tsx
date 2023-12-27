@@ -5,7 +5,8 @@ import ProtectedRoute from "@/ProtectedRoute";
 import NotFound from "@/pages/NotFound";
 import Loading from "@/components/Loading";
 
-const Dashboard = lazy(() => import("@/pages/Dashboard"));
+const Spaces = lazy(() => import("@/pages/Spaces"));
+const SpaceDetails = lazy(() => import("@/pages/SpaceDetails"));
 const Auth = lazy(() => import("@/pages/Auth"));
 
 const Router = () => {
@@ -16,7 +17,15 @@ const Router = () => {
           path={ROUTES.DASHBOARD}
           element={
             <ProtectedRoute>
-              <Dashboard />
+              <Spaces />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.SPACE}
+          element={
+            <ProtectedRoute>
+              <SpaceDetails />
             </ProtectedRoute>
           }
         />
