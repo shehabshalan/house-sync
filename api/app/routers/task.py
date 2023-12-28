@@ -64,18 +64,20 @@ async def create_task(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-@router.put("/tasks/{task_id}", status_code=status.HTTP_200_OK)
+@router.put("/tasks/{task_id}/status", status_code=status.HTTP_200_OK)
 async def update_task_status(
-    task_id: int, is_completed: bool, session: Session = Depends(get_session), user: User = Depends(get_current_user)
+    task_id: int, session: Session = Depends(get_session), user: User = Depends(get_current_user)
 ):
     task_user = session.exec(
-        select(TaskUser).where(TaskUser.task_id == task_id, TaskUser.user_email == user.email)
+        select(TaskUser).where(TaskUser.task_id == task_id, TaskUser.user_email == user["email"])
     ).first()
     if not task_user:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is not associated with the task")
 
-    task_user.is_completed = is_completed
+    task_user.is_completed = True
+    session.add(task_user)
     session.commit()
+    session.refresh(task_user)
 
     all_completed = (
         session.exec(select(TaskUser).where(TaskUser.task_id == task_id, TaskUser.is_completed == False)).first()
@@ -83,15 +85,14 @@ async def update_task_status(
     )
     if all_completed:
         task = session.exec(select(Task).where(Task.id == task_id)).first()
-        start_date = datetime.utcfromtimestamp(task_user.due_date.timestamp()).replace(tzinfo=timezone.utc)
-        num_users = session.exec(select(TaskUser).where(TaskUser.task_id == task_id)).count()
-        due_dates = generate_due_dates(start_date, task.frequency, num_users)
-
+        start_date = datetime.now(timezone.utc)
+        num_users = session.exec(select(TaskUser).where(TaskUser.task_id == task_id)).all()
+        due_dates = generate_due_dates(start_date, task.frequency, len(num_users))
         for i, user_email in enumerate(
             session.exec(select(TaskUser.user_email).where(TaskUser.task_id == task_id)).all()
         ):
             task_user = session.exec(
-                select(TaskUser).where(TaskUser.task_id == task_id, TaskUser.user_email == user_email[0])
+                select(TaskUser).where(TaskUser.task_id == task_id, TaskUser.user_email == user_email)
             ).first()
             task_user.due_date = due_dates[i]
             task_user.is_completed = False
