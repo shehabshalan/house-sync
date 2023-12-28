@@ -5,7 +5,9 @@ from app.utils.auth import generate_access_token, verify_google_token
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 
-router = APIRouter()
+router = APIRouter(
+    tags=["Authentication"],
+)
 
 
 @router.post("/auth", response_model=UserResponse, status_code=status.HTTP_201_CREATED)

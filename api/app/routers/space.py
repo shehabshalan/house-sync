@@ -7,10 +7,13 @@ from app.utils.auth import get_current_user
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/spaces",
+    tags=["Spaces"],
+)
 
 
-@router.get("/spaces", status_code=status.HTTP_200_OK, response_model=List[schemas.GetSpace])
+@router.get("/", status_code=status.HTTP_200_OK, response_model=List[schemas.GetSpace])
 async def get_user_spaces(
     session: Session = Depends(get_session), user: schemas.User = Depends(get_current_user)
 ) -> List[schemas.GetSpace]:
@@ -30,7 +33,7 @@ async def get_user_spaces(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-@router.post("/spaces", status_code=status.HTTP_201_CREATED)
+@router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_space(
     space: schemas.CreateSpace, session: Session = Depends(get_session), user: schemas.User = Depends(get_current_user)
 ):
@@ -50,7 +53,7 @@ async def create_space(
     return space.model_dump()
 
 
-@router.post("/spaces/invite", status_code=status.HTTP_201_CREATED)
+@router.post("/invite", status_code=status.HTTP_201_CREATED)
 async def create_user_invites(
     invite_users: schemas.InviteUser,
     session: Session = Depends(get_session),
@@ -81,7 +84,7 @@ async def create_user_invites(
     return {"message": "Invites sent successfully"}
 
 
-@router.get("/spaces/{space_id}", status_code=status.HTTP_200_OK)
+@router.get("/{space_id}", status_code=status.HTTP_200_OK)
 async def get_space(
     space_id: int, session: Session = Depends(get_session), user: schemas.User = Depends(get_current_user)
 ):
@@ -133,7 +136,7 @@ async def get_space(
     return space_details
 
 
-@router.delete("/spaces/{space_id}", status_code=status.HTTP_200_OK)
+@router.delete("/{space_id}", status_code=status.HTTP_200_OK)
 async def delete_space(
     space_id: int, session: Session = Depends(get_session), user: schemas.User = Depends(get_current_user)
 ):
@@ -145,7 +148,7 @@ async def delete_space(
     return {"message": "Space deleted successfully"}
 
 
-@router.put("/spaces/{space_id}", status_code=status.HTTP_200_OK)
+@router.put("/{space_id}", status_code=status.HTTP_200_OK)
 async def update_space(
     space_id: int,
     space: schemas.CreateSpace,

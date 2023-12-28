@@ -8,7 +8,10 @@ from app.utils.auth import get_current_user
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/tasks",
+    tags=["Tasks"],
+)
 
 
 def generate_due_dates(start_date, frequency, num_users):
@@ -23,7 +26,7 @@ def generate_due_dates(start_date, frequency, num_users):
     return due_dates
 
 
-@router.post("/tasks", status_code=status.HTTP_201_CREATED)
+@router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_task(
     new_task: schemas.CreateTask,
     session: Session = Depends(get_session),
@@ -65,7 +68,7 @@ async def create_task(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-@router.put("/tasks/{task_id}/status", status_code=status.HTTP_200_OK)
+@router.put("/{task_id}/status", status_code=status.HTTP_200_OK)
 async def update_task_status(
     task_id: int, session: Session = Depends(get_session), user: User = Depends(get_current_user)
 ):
@@ -100,14 +103,3 @@ async def update_task_status(
 
     session.commit()
     return {"message": "Task status updated successfully"}
-
-
-@router.get("/space/tasks/{id}", status_code=status.HTTP_200_OK, response_model=List[schemas.GetTask])
-async def get_tasks(
-    id: int, session: Session = Depends(get_session), user: schemas.User = Depends(get_current_user)
-) -> List[schemas.GetTask]:
-    try:
-        tasks = session.exec(select(Task).where(Task.space_id == id)).all()
-        return tasks
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
