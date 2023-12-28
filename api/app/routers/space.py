@@ -1,8 +1,10 @@
+from datetime import datetime, timezone
 from typing import List
 
 from app import schemas
 from app.db import get_session
 from app.models import Space, SpaceUser, Task, TaskUser, User
+from app.utils import generate_due_dates
 from app.utils.auth import get_current_user
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
@@ -78,9 +80,38 @@ async def create_user_invites(
             session.add(invite)
             session.commit()
             session.refresh(invite)
-
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    tasks = session.exec(select(Task).where(Task.space_id == invite_users.space_id)).all()
+    if not tasks:
+        return {"message": "Invites sent successfully"}
+
+    # first we need to add the new users to the tasks before we can update the due dates
+    for task in tasks:
+        for user in new_users + existing_users:
+            task_user = TaskUser(task_id=task.id, user_email=user.email)
+            try:
+                session.add(task_user)
+                session.commit()
+            except Exception as e:
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+    try:
+        for task in tasks:
+            users_in_task = session.exec(
+                select(TaskUser).where(TaskUser.task_id == task.id).order_by(TaskUser.user_email)
+            ).all()
+            start_date = datetime.fromtimestamp(task.start_date).replace(tzinfo=timezone.utc)
+            due_dates = generate_due_dates(start_date, task.frequency, len(users_in_task))
+            for i, user in enumerate(users_in_task):
+                user.due_date = due_dates[i]
+                session.add(user)
+                session.commit()
+                session.refresh(user)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
     return {"message": "Invites sent successfully"}
 
 
