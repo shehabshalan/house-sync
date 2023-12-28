@@ -1,9 +1,8 @@
 from typing import List
 
+from app import schemas
 from app.db import get_session
 from app.models import Space, SpaceUser, Task, TaskUser, User
-from app.schemas import CreateSpace, GetSpace, InviteUser
-from app.schemas import User as UserSchema
 from app.utils.auth import get_current_user
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
@@ -11,10 +10,10 @@ from sqlmodel import Session, select
 router = APIRouter()
 
 
-@router.get("/spaces", status_code=status.HTTP_200_OK, response_model=List[GetSpace])
+@router.get("/spaces", status_code=status.HTTP_200_OK, response_model=List[schemas.GetSpace])
 async def get_user_spaces(
-    session: Session = Depends(get_session), user: UserSchema = Depends(get_current_user)
-) -> List[GetSpace]:
+    session: Session = Depends(get_session), user: schemas.User = Depends(get_current_user)
+) -> List[schemas.GetSpace]:
     try:
         user_spaces_ids = session.exec(select(SpaceUser).where(SpaceUser.user_email == user["email"])).all()
         user_spaces = []
@@ -33,7 +32,7 @@ async def get_user_spaces(
 
 @router.post("/spaces", status_code=status.HTTP_201_CREATED)
 async def create_space(
-    space: CreateSpace, session: Session = Depends(get_session), user: UserSchema = Depends(get_current_user)
+    space: schemas.CreateSpace, session: Session = Depends(get_session), user: schemas.User = Depends(get_current_user)
 ):
     space = Space(**space.model_dump(), owner_email=user["email"])
 
@@ -53,7 +52,9 @@ async def create_space(
 
 @router.post("/spaces/invite", status_code=status.HTTP_201_CREATED)
 async def create_user_invites(
-    invite_users: InviteUser, session: Session = Depends(get_session), user: UserSchema = Depends(get_current_user)
+    invite_users: schemas.InviteUser,
+    session: Session = Depends(get_session),
+    user: schemas.User = Depends(get_current_user),
 ):
     existing_users = session.exec(select(User).where(User.email.in_(invite_users.emails))).all()
     existing_emails = {user.email for user in existing_users}
@@ -81,7 +82,9 @@ async def create_user_invites(
 
 
 @router.get("/spaces/{space_id}", status_code=status.HTTP_200_OK)
-async def get_space(space_id: int, session: Session = Depends(get_session), user: User = Depends(get_current_user)):
+async def get_space(
+    space_id: int, session: Session = Depends(get_session), user: schemas.User = Depends(get_current_user)
+):
     user_in_space = session.exec(
         select(User).join(SpaceUser).where(SpaceUser.space_id == space_id, User.email == user["email"])
     ).first()
@@ -132,7 +135,7 @@ async def get_space(space_id: int, session: Session = Depends(get_session), user
 
 @router.delete("/spaces/{space_id}", status_code=status.HTTP_200_OK)
 async def delete_space(
-    space_id: int, session: Session = Depends(get_session), user: UserSchema = Depends(get_current_user)
+    space_id: int, session: Session = Depends(get_session), user: schemas.User = Depends(get_current_user)
 ):
     space = session.exec(select(Space).where(Space.id == space_id)).first()
     if not space:
@@ -145,9 +148,9 @@ async def delete_space(
 @router.put("/spaces/{space_id}", status_code=status.HTTP_200_OK)
 async def update_space(
     space_id: int,
-    space: CreateSpace,
+    space: schemas.CreateSpace,
     session: Session = Depends(get_session),
-    user: UserSchema = Depends(get_current_user),
+    user: schemas.User = Depends(get_current_user),
 ):
     space = session.exec(select(Space).where(Space.id == space_id)).first()
     if not space:

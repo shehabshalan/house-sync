@@ -1,10 +1,9 @@
 from datetime import datetime, timedelta, timezone
 from typing import List
 
+from app import schemas
 from app.db import get_session
 from app.models import Space, SpaceUser, Task, TaskFrequency, TaskUser, User
-from app.schemas import CreateTask, GetTask
-from app.schemas import User as UserSchema
 from app.utils.auth import get_current_user
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
@@ -26,7 +25,9 @@ def generate_due_dates(start_date, frequency, num_users):
 
 @router.post("/tasks", status_code=status.HTTP_201_CREATED)
 async def create_task(
-    new_task: CreateTask, session: Session = Depends(get_session), user: UserSchema = Depends(get_current_user)
+    new_task: schemas.CreateTask,
+    session: Session = Depends(get_session),
+    user: schemas.User = Depends(get_current_user),
 ):
     try:
         space = session.exec(
@@ -101,10 +102,10 @@ async def update_task_status(
     return {"message": "Task status updated successfully"}
 
 
-@router.get("/space/tasks/{id}", status_code=status.HTTP_200_OK, response_model=List[GetTask])
+@router.get("/space/tasks/{id}", status_code=status.HTTP_200_OK, response_model=List[schemas.GetTask])
 async def get_tasks(
-    id: int, session: Session = Depends(get_session), user: UserSchema = Depends(get_current_user)
-) -> List[GetTask]:
+    id: int, session: Session = Depends(get_session), user: schemas.User = Depends(get_current_user)
+) -> List[schemas.GetTask]:
     try:
         tasks = session.exec(select(Task).where(Task.space_id == id)).all()
         return tasks
