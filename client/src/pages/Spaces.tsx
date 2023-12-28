@@ -1,4 +1,4 @@
-import { AddSpace } from "@/components/AddSpace";
+import AddSpace from "@/components/AddSpace";
 import DashboardLayout from "@/components/DashboardLayout";
 import Loading from "@/components/Loading";
 import SpaceCard from "@/components/SpaceCard";
