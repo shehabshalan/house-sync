@@ -10,9 +10,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { ROUTES } from "@/routes/Routes";
 import { Link } from "react-router-dom";
 
-const SpaceCard = ({ space }: { space: Space }) => {
+type SpaceCardProps = {
+  space: Space;
+};
+const SpaceCard = ({ space }: SpaceCardProps) => {
   return (
-    <Link to={ROUTES.SPACE.replace(":id", space.id)}>
+    <Link to={ROUTES.SPACE.replace(":id", String(space.id))}>
       <Card className="flex flex-col justify-between cursor-pointer space-card hover:shadow-xl transition-shadow duration-300 ease-in-out">
         <CardHeader className="flex flex-row items-center gap-4">
           <HomeIcon className="w-8 h-8" />
@@ -23,7 +26,7 @@ const SpaceCard = ({ space }: { space: Space }) => {
         </CardHeader>
         <CardContent className="flex items-center gap-2">
           {space.users.slice(0, 5).map((user) => (
-            <Avatar key={user.id}>
+            <Avatar key={user.email}>
               <AvatarImage
                 alt={user.name}
                 src={user.picture || "/placeholder-avatar.jpg"}
