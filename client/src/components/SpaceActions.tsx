@@ -2,24 +2,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import AddTask from "./AddTask";
-import { Mail, TrashIcon } from "lucide-react";
+import { TrashIcon } from "lucide-react";
 import { ActionDialog } from "./ActionDialog";
 import { useDeleteSpace } from "@/services/useDeleteSpace";
 import { useToast } from "./ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import InviteUser from "./InviteUser";
 
-type SpaceInformationProps = {
+type SpaceActionsProps = {
   space: SpaceDetails | undefined;
 };
 
-const SpaceInformation = ({ space }: SpaceInformationProps) => {
+const SpaceActions = ({ space }: SpaceActionsProps) => {
   const { name, users, id } = space || {};
   const { mutate } = useDeleteSpace();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const handleDelete = () => {
-    console.log("Delete space", id);
 
+  const handleDelete = () => {
     mutate(Number(id), {
       onSuccess: () => {
         toast({
@@ -27,7 +27,6 @@ const SpaceInformation = ({ space }: SpaceInformationProps) => {
           title: "Space Deleted",
         });
         queryClient.invalidateQueries({ queryKey: ["spaces"] });
-        console.log("Space deleted");
       },
       onError: (e: Error & { response?: any }) => {
         toast({
@@ -38,17 +37,16 @@ const SpaceInformation = ({ space }: SpaceInformationProps) => {
       },
     });
   };
+
   return (
     <Card>
       <CardHeader className="flex justify-between flex-row">
         <CardTitle>{name}</CardTitle>
         <div className="flex flex-col  gap-4 md:flex-row md:items-center md:gap-2">
-          <Button size="sm" variant="outline">
+          <Button size="sm" variant="outline" disabled={true}>
             Edit Space
           </Button>
-          <Button size="sm" variant="secondary">
-            <Mail className="mr-2 h-4 w-4" /> Invite Members
-          </Button>
+          <InviteUser />
           <AddTask />
           <ActionDialog
             title="Delete Space"
@@ -57,7 +55,12 @@ const SpaceInformation = ({ space }: SpaceInformationProps) => {
             continueButtonText="Delete"
             cancelButtonText="Cancel"
           >
-            <Button variant="destructive" size="icon" className="ml-auto">
+            <Button
+              variant="destructive"
+              size="icon"
+              className="ml-auto"
+              disabled={true}
+            >
               <TrashIcon className="w-4 h-4" />
             </Button>
           </ActionDialog>
@@ -80,4 +83,4 @@ const SpaceInformation = ({ space }: SpaceInformationProps) => {
   );
 };
 
-export default SpaceInformation;
+export default SpaceActions;
