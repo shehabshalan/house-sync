@@ -99,6 +99,7 @@ async def get_space(
     users_in_space = session.exec(select(User).join(SpaceUser).where(SpaceUser.space_id == space_id)).all()
     tasks_in_space = session.exec(select(Task).where(Task.space_id == space_id)).all()
     space_details = {
+        "id": space.id,
         "name": space.name,
         "description": space.description,
         "owner_email": space.owner_email,
@@ -143,8 +144,14 @@ async def delete_space(
     space = session.exec(select(Space).where(Space.id == space_id)).first()
     if not space:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Space not found")
-    session.delete(space)
-    session.commit()
+    if space.owner_email != user["email"]:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized to delete this space")
+    try:
+        session.delete(space)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     return {"message": "Space deleted successfully"}
 
 
