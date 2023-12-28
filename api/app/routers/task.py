@@ -21,12 +21,10 @@ async def create_task(
     session: Session = Depends(get_session),
     user: schemas.User = Depends(get_current_user),
 ):
+    space = session.exec(select(Space).where(Space.id == new_task.space_id, Space.owner_email == user["email"])).first()
+    if not space:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is not the owner of the space")
     try:
-        space = session.exec(
-            select(Space).where(Space.id == new_task.space_id, Space.owner_email == user["email"])
-        ).first()
-        if not space:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is not the owner of the space")
         task = Task(
             name=new_task.name,
             description=new_task.description,
