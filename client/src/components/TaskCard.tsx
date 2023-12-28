@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "./ui/table";
 import { Button } from "./ui/button";
+import { format } from "date-fns";
 
 type TaskCardProps = {
   task: Task;
@@ -42,7 +43,9 @@ const TaskCard = ({ task }: TaskCardProps) => {
                   <TableCell className="font-medium">
                     {user.user_email}
                   </TableCell>
-                  <TableCell className="font-medium">{user.due_date}</TableCell>
+                  <TableCell className="font-medium">
+                    {format(user.due_date, "MM/dd/yyyy")}
+                  </TableCell>
                   <TableCell>
                     {user.is_completed ? (
                       <Button size="sm" variant="outline" disabled={true}>
