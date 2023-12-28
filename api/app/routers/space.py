@@ -158,7 +158,9 @@ async def get_space(
                         "is_completed": task_user.is_completed,
                         "due_date": task_user.due_date,
                     }
-                    for task_user in session.exec(select(TaskUser).where(TaskUser.task_id == task.id)).all()
+                    for task_user in session.exec(
+                        select(TaskUser).where(TaskUser.task_id == task.id).order_by(TaskUser.user_email)
+                    ).all()
                 ],
             }
             for task in tasks_in_space
