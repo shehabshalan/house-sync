@@ -1,9 +1,10 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import List
 
 from app import schemas
 from app.db import get_session
-from app.models import Space, SpaceUser, Task, TaskFrequency, TaskUser, User
+from app.models import Space, SpaceUser, Task, TaskUser, User
+from app.utils import generate_due_dates
 from app.utils.auth import get_current_user
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
@@ -12,18 +13,6 @@ router = APIRouter(
     prefix="/tasks",
     tags=["Tasks"],
 )
-
-
-def generate_due_dates(start_date, frequency, num_users):
-    due_dates = []
-    for i in range(num_users):
-        due_date = (
-            start_date + timedelta(weeks=i)
-            if frequency == TaskFrequency.WEEKLY
-            else start_date + timedelta(weeks=i * 4)
-        )  # otherwise it is monthly
-        due_dates.append(due_date)
-    return due_dates
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -43,6 +32,7 @@ async def create_task(
             description=new_task.description,
             frequency=new_task.frequency,
             space_id=new_task.space_id,
+            start_date=new_task.start_date,
         )
         session.add(task)
         session.commit()
