@@ -14,7 +14,7 @@ const SpaceInformation = ({ space }: SpaceInformationProps) => {
     <Card>
       <CardHeader className="flex justify-between flex-row">
         <CardTitle>{name}</CardTitle>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col  gap-4 md:flex-row md:items-center md:gap-2">
           <Button size="sm" variant="outline">
             Edit Space
           </Button>
