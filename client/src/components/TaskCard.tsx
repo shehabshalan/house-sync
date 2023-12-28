@@ -15,39 +15,45 @@ import {
 } from "./ui/table";
 import { Button } from "./ui/button";
 
-const TaskCard = () => {
+type TaskCardProps = {
+  task: Task;
+};
+
+const TaskCard = ({ task }: TaskCardProps) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Chore Tasks</CardTitle>
-        <CardDescription>
-          A list of tasks that need to be completed by the assigned members.
-        </CardDescription>
+        <CardTitle>{task.name}</CardTitle>
+        <CardDescription>{task.description}</CardDescription>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Member Names</TableHead>
+              <TableHead>User</TableHead>
               <TableHead>Due Date</TableHead>
               <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            <TableRow>
-              <TableCell className="font-medium">Clean Kitchen</TableCell>
-              <TableCell>12/31/2023</TableCell>
-              <TableCell>
-                <Button size="sm">Mark as Complete</Button>
-              </TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell className="font-medium">Buy Groceries</TableCell>
-              <TableCell>12/30/2023</TableCell>
-              <TableCell>
-                <Button size="sm">Mark as Complete</Button>
-              </TableCell>
-            </TableRow>
+            {task.users.length > 0 &&
+              task.users.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell className="font-medium">
+                    {user.user_email}
+                  </TableCell>
+                  <TableCell className="font-medium">{user.due_date}</TableCell>
+                  <TableCell>
+                    {user.is_completed ? (
+                      <Button size="sm" variant="outline" disabled={true}>
+                        Completed
+                      </Button>
+                    ) : (
+                      <Button size="sm">Mark as Complete</Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
           </TableBody>
         </Table>
       </CardContent>
