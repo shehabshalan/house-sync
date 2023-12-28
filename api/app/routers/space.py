@@ -16,16 +16,17 @@ async def get_user_spaces(
     session: Session = Depends(get_session), user: UserSchema = Depends(get_current_user)
 ) -> List[GetSpace]:
     try:
-        user_spaces = session.exec(select(Space).where(Space.owner_email == user["email"])).all()
-        space_users = []
-        for space_user in user_spaces:
-            users = session.exec(select(SpaceUser).where(SpaceUser.space_id == space_user.id)).all()
-            space_users.append({**space_user.model_dump(), "users": users})
-        for space_user in space_users:
-            space_user["users"] = session.exec(
-                select(User).join(SpaceUser).where(SpaceUser.space_id == space_user["id"])
-            ).all()
-        return space_users
+        user_spaces_ids = session.exec(select(SpaceUser).where(SpaceUser.user_email == user["email"])).all()
+        user_spaces = []
+        for space_id in user_spaces_ids:
+            space = session.exec(select(Space).where(Space.id == space_id.space_id)).first()
+            space_data = space.model_dump()
+            space_data["users"] = []
+            space_members = session.exec(select(User).join(SpaceUser).where(SpaceUser.space_id == space.id)).all()
+            for member in space_members:
+                space_data["users"].append(member.model_dump())
+            user_spaces.append(space_data)
+        return user_spaces
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
@@ -54,9 +55,12 @@ async def create_space(
 async def create_user_invites(
     invite_users: InviteUser, session: Session = Depends(get_session), user: UserSchema = Depends(get_current_user)
 ):
-    users = [User(email=email) for email in invite_users.emails]
+    existing_users = session.exec(select(User).where(User.email.in_(invite_users.emails))).all()
+    existing_emails = {user.email for user in existing_users}
+
+    new_users = [User(email=email) for email in invite_users.emails if email not in existing_emails]
     try:
-        for user in users:
+        for user in new_users:
             session.add(user)
             session.commit()
             session.refresh(user)
