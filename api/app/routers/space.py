@@ -1,7 +1,7 @@
 from typing import List
 
 from app.db import get_session
-from app.models import Space, SpaceUser, User
+from app.models import Space, SpaceUser, Task, TaskUser, User
 from app.schemas import CreateSpace, GetSpace, InviteUser
 from app.schemas import User as UserSchema
 from app.utils.auth import get_current_user
@@ -16,16 +16,17 @@ async def get_user_spaces(
     session: Session = Depends(get_session), user: UserSchema = Depends(get_current_user)
 ) -> List[GetSpace]:
     try:
-        user_spaces = session.exec(select(Space).where(Space.owner_email == user["email"])).all()
-        space_users = []
-        for space_user in user_spaces:
-            users = session.exec(select(SpaceUser).where(SpaceUser.space_id == space_user.id)).all()
-            space_users.append({**space_user.model_dump(), "users": users})
-        for space_user in space_users:
-            space_user["users"] = session.exec(
-                select(User).join(SpaceUser).where(SpaceUser.space_id == space_user["id"])
-            ).all()
-        return space_users
+        user_spaces_ids = session.exec(select(SpaceUser).where(SpaceUser.user_email == user["email"])).all()
+        user_spaces = []
+        for space_id in user_spaces_ids:
+            space = session.exec(select(Space).where(Space.id == space_id.space_id)).first()
+            space_data = space.model_dump()
+            space_data["users"] = []
+            space_members = session.exec(select(User).join(SpaceUser).where(SpaceUser.space_id == space.id)).all()
+            for member in space_members:
+                space_data["users"].append(member.model_dump())
+            user_spaces.append(space_data)
+        return user_spaces
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
@@ -54,9 +55,12 @@ async def create_space(
 async def create_user_invites(
     invite_users: InviteUser, session: Session = Depends(get_session), user: UserSchema = Depends(get_current_user)
 ):
-    users = [User(email=email) for email in invite_users.emails]
+    existing_users = session.exec(select(User).where(User.email.in_(invite_users.emails))).all()
+    existing_emails = {user.email for user in existing_users}
+
+    new_users = [User(email=email) for email in invite_users.emails if email not in existing_emails]
     try:
-        for user in users:
+        for user in new_users:
             session.add(user)
             session.commit()
             session.refresh(user)
@@ -77,13 +81,53 @@ async def create_user_invites(
 
 
 @router.get("/spaces/{space_id}", status_code=status.HTTP_200_OK)
-async def get_space(
-    space_id: int, session: Session = Depends(get_session), user: UserSchema = Depends(get_current_user)
-):
+async def get_space(space_id: int, session: Session = Depends(get_session), user: User = Depends(get_current_user)):
+    user_in_space = session.exec(
+        select(User).join(SpaceUser).where(SpaceUser.space_id == space_id, User.email == user["email"])
+    ).first()
+    if not user_in_space:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is not a member of the space")
     space = session.exec(select(Space).where(Space.id == space_id)).first()
     if not space:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Space not found")
-    return space.model_dump()
+    users_in_space = session.exec(select(User).join(SpaceUser).where(SpaceUser.space_id == space_id)).all()
+    tasks_in_space = session.exec(select(Task).where(Task.space_id == space_id)).all()
+    space_details = {
+        "name": space.name,
+        "description": space.description,
+        "owner_email": space.owner_email,
+        "users": [
+            {
+                "email": user.email,
+                "name": user.name,
+                "picture": user.picture,
+                "is_active": user.is_active,
+            }
+            for user in users_in_space
+        ],
+        "tasks": [
+            {
+                "id": task.id,
+                "name": task.name,
+                "description": task.description,
+                "frequency": task.frequency,
+                "space_id": task.space_id,
+                "users": [
+                    {
+                        "id": task_user.id,
+                        "task_id": task_user.task_id,
+                        "user_email": task_user.user_email,
+                        "is_completed": task_user.is_completed,
+                        "due_date": task_user.due_date,
+                    }
+                    for task_user in session.exec(select(TaskUser).where(TaskUser.task_id == task.id)).all()
+                ],
+            }
+            for task in tasks_in_space
+        ],
+    }
+
+    return space_details
 
 
 @router.delete("/spaces/{space_id}", status_code=status.HTTP_200_OK)

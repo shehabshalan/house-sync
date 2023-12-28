@@ -15,17 +15,26 @@ import { useCreateSpace } from "@/services/useCreateSpace";
 import { useState } from "react";
 import { useToast } from "./ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { Textarea } from "./ui/textarea";
 
-export function AddSpace() {
+const AddSpace = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { mutate, isPending } = useCreateSpace();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  //   const [isOpen, setIsOpen] = useState(false);
 
   const handleSubmit = () => {
+    if (!name || !description) {
+      toast({
+        variant: "destructive",
+        title: "One or more fields are empty",
+        description: "Please fill out both fields.",
+      });
+      return;
+    }
+
     mutate(
       { name, description },
       {
@@ -37,7 +46,7 @@ export function AddSpace() {
             title: "Space created",
           });
           queryClient.invalidateQueries({ queryKey: ["spaces"] });
-          //   setIsOpen(false);
+          document.getElementById("closeDialog")?.click();
         },
         onError: (e: Error & { response?: any }) => {
           toast({
@@ -48,7 +57,6 @@ export function AddSpace() {
         },
       }
     );
-    console.log(name, description);
   };
   return (
     <Dialog>
@@ -59,37 +67,37 @@ export function AddSpace() {
         <DialogHeader>
           <DialogTitle>Add new space</DialogTitle>
           <DialogDescription>
-            Spaces are where your housemates can track tasks and shipping lists.
-            You can create as many as you like.
+            Spaces are where your housemates can create or track tasks and
+            shipping lists. You can create as many as you like.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">
+            <Label htmlFor="name" className="text-left">
               Name
             </Label>
             <Input
               id="name"
               value={name}
-              className="col-span-3"
+              className="col-span-6"
               onChange={(e) => setName(e.target.value)}
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="description" className="text-right">
-              description
+            <Label htmlFor="description" className="text-left">
+              Description
             </Label>
-            <Input
+            <Textarea
               id="description"
               value={description}
-              className="col-span-3"
+              className="col-span-6"
               onChange={(e) => setDescription(e.target.value)}
             />
           </div>
         </div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button type="submit" variant="outline">
+            <Button type="submit" variant="outline" id="closeDialog">
               Close
             </Button>
           </DialogClose>
@@ -100,4 +108,6 @@ export function AddSpace() {
       </DialogContent>
     </Dialog>
   );
-}
+};
+
+export default AddSpace;

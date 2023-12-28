@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import List
 
 from pydantic import BaseModel
@@ -34,3 +35,20 @@ class CreateSpace(BaseModel):
 class InviteUser(BaseModel):
     space_id: int
     emails: List[str]
+
+
+class TaskFrequency(str, Enum):
+    WEEKLY = "WEEKLY"
+    MONTHLY = "MONTHLY"
+
+
+class CreateTask(BaseModel):
+    name: str
+    description: str
+    frequency: TaskFrequency
+    start_date: int
+    space_id: int
+
+
+class GetTask(CreateTask):
+    id: int
