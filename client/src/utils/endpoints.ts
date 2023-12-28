@@ -5,4 +5,6 @@ export const API_ENDPOINTS = {
   USER_ME: "/users/me",
   // Spaces
   SPACES: "/spaces",
+  // Tasks
+  TASKS: "/tasks",
 };
