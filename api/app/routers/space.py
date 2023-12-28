@@ -1,20 +1,24 @@
+from datetime import datetime, timezone
 from typing import List
 
+from app import schemas
 from app.db import get_session
 from app.models import Space, SpaceUser, Task, TaskUser, User
-from app.schemas import CreateSpace, GetSpace, InviteUser
-from app.schemas import User as UserSchema
+from app.utils import generate_due_dates
 from app.utils.auth import get_current_user
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/spaces",
+    tags=["Spaces"],
+)
 
 
-@router.get("/spaces", status_code=status.HTTP_200_OK, response_model=List[GetSpace])
+@router.get("/", status_code=status.HTTP_200_OK, response_model=List[schemas.GetSpace])
 async def get_user_spaces(
-    session: Session = Depends(get_session), user: UserSchema = Depends(get_current_user)
-) -> List[GetSpace]:
+    session: Session = Depends(get_session), user: schemas.User = Depends(get_current_user)
+) -> List[schemas.GetSpace]:
     try:
         user_spaces_ids = session.exec(select(SpaceUser).where(SpaceUser.user_email == user["email"])).all()
         user_spaces = []
@@ -31,9 +35,9 @@ async def get_user_spaces(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-@router.post("/spaces", status_code=status.HTTP_201_CREATED)
+@router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_space(
-    space: CreateSpace, session: Session = Depends(get_session), user: UserSchema = Depends(get_current_user)
+    space: schemas.CreateSpace, session: Session = Depends(get_session), user: schemas.User = Depends(get_current_user)
 ):
     space = Space(**space.model_dump(), owner_email=user["email"])
 
@@ -51,9 +55,11 @@ async def create_space(
     return space.model_dump()
 
 
-@router.post("/spaces/invite", status_code=status.HTTP_201_CREATED)
+@router.post("/invite", status_code=status.HTTP_201_CREATED)
 async def create_user_invites(
-    invite_users: InviteUser, session: Session = Depends(get_session), user: UserSchema = Depends(get_current_user)
+    invite_users: schemas.InviteUser,
+    session: Session = Depends(get_session),
+    user: schemas.User = Depends(get_current_user),
 ):
     existing_users = session.exec(select(User).where(User.email.in_(invite_users.emails))).all()
     existing_emails = {user.email for user in existing_users}
@@ -74,14 +80,45 @@ async def create_user_invites(
             session.add(invite)
             session.commit()
             session.refresh(invite)
-
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    tasks = session.exec(select(Task).where(Task.space_id == invite_users.space_id)).all()
+    if not tasks:
+        return {"message": "Invites sent successfully"}
+
+    # first we need to add the new users to the tasks before we can update the due dates
+    for task in tasks:
+        for user in new_users + existing_users:
+            task_user = TaskUser(task_id=task.id, user_email=user.email)
+            try:
+                session.add(task_user)
+                session.commit()
+            except Exception as e:
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+    try:
+        for task in tasks:
+            users_in_task = session.exec(
+                select(TaskUser).where(TaskUser.task_id == task.id).order_by(TaskUser.user_email)
+            ).all()
+            start_date = datetime.fromtimestamp(task.start_date).replace(tzinfo=timezone.utc)
+            due_dates = generate_due_dates(start_date, task.frequency, len(users_in_task))
+            for i, user in enumerate(users_in_task):
+                user.due_date = due_dates[i]
+                session.add(user)
+                session.commit()
+                session.refresh(user)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
     return {"message": "Invites sent successfully"}
 
 
-@router.get("/spaces/{space_id}", status_code=status.HTTP_200_OK)
-async def get_space(space_id: int, session: Session = Depends(get_session), user: User = Depends(get_current_user)):
+@router.get("/{space_id}", status_code=status.HTTP_200_OK)
+async def get_space(
+    space_id: int, session: Session = Depends(get_session), user: schemas.User = Depends(get_current_user)
+):
     user_in_space = session.exec(
         select(User).join(SpaceUser).where(SpaceUser.space_id == space_id, User.email == user["email"])
     ).first()
@@ -93,6 +130,7 @@ async def get_space(space_id: int, session: Session = Depends(get_session), user
     users_in_space = session.exec(select(User).join(SpaceUser).where(SpaceUser.space_id == space_id)).all()
     tasks_in_space = session.exec(select(Task).where(Task.space_id == space_id)).all()
     space_details = {
+        "id": space.id,
         "name": space.name,
         "description": space.description,
         "owner_email": space.owner_email,
@@ -130,24 +168,30 @@ async def get_space(space_id: int, session: Session = Depends(get_session), user
     return space_details
 
 
-@router.delete("/spaces/{space_id}", status_code=status.HTTP_200_OK)
+@router.delete("/{space_id}", status_code=status.HTTP_200_OK)
 async def delete_space(
-    space_id: int, session: Session = Depends(get_session), user: UserSchema = Depends(get_current_user)
+    space_id: int, session: Session = Depends(get_session), user: schemas.User = Depends(get_current_user)
 ):
     space = session.exec(select(Space).where(Space.id == space_id)).first()
     if not space:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Space not found")
-    session.delete(space)
-    session.commit()
+    if space.owner_email != user["email"]:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized to delete this space")
+    try:
+        session.delete(space)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     return {"message": "Space deleted successfully"}
 
 
-@router.put("/spaces/{space_id}", status_code=status.HTTP_200_OK)
+@router.put("/{space_id}", status_code=status.HTTP_200_OK)
 async def update_space(
     space_id: int,
-    space: CreateSpace,
+    space: schemas.CreateSpace,
     session: Session = Depends(get_session),
-    user: UserSchema = Depends(get_current_user),
+    user: schemas.User = Depends(get_current_user),
 ):
     space = session.exec(select(Space).where(Space.id == space_id)).first()
     if not space:

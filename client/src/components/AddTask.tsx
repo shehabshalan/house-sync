@@ -94,7 +94,6 @@ const AddTask = () => {
         },
       }
     );
-    console.log(name, description, frequency, unixDate, id);
   };
   return (
     <Dialog>

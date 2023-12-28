@@ -1,4 +1,4 @@
-import SpaceInformation from "@/components/SpaceInformation";
+import SpaceActions from "@/components/SpaceActions";
 import TaskCard from "@/components/TaskCard";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useParams } from "react-router";
@@ -17,7 +17,7 @@ const SpaceDetails = () => {
         <Loading />
       ) : (
         <>
-          <SpaceInformation space={space} />
+          <SpaceActions space={space} />
           {space?.tasks?.map((task) => (
             <TaskCard key={task.id} task={task} />
           ))}
