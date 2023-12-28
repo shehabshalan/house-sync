@@ -12,8 +12,10 @@ const Auth = () => {
     const token = response.credential;
     mutate(token, {
       onSuccess(data) {
-        localStorage.setItem("token", data.token);
-        window.location.href = ROUTES.DASHBOARD;
+        if (data.token) {
+          localStorage.setItem("token", data.token);
+          window.location.href = ROUTES.DASHBOARD;
+        }
       },
       onError(e: Error & { response?: any }) {
         toast({
@@ -33,10 +35,16 @@ const Auth = () => {
       <div className="bg-gray-100 min-h-screen flex items-center justify-center">
         <div className="max-w-sm rounded-lg shadow-lg bg-white p-6 space-y-6 border border-gray-200 dark:border-gray-700">
           <div className="space-y-2 text-center">
-            <h1 className="text-3xl font-bold">Login</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Login</h1>
+            <p className="text-sm text-muted-foreground">
+              Login to your account to access your spaces.
+            </p>
           </div>
           <div className="space-y-4">
-            <div id="login-div" className="w-full"></div>
+            <div
+              id="login-div"
+              className=" flex items-start justify-center"
+            ></div>
           </div>
         </div>
       </div>

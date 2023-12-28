@@ -35,8 +35,8 @@ const InviteUser = () => {
 
   const handleAddEmail = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && e.currentTarget.value) {
-      // validate it is a valid email
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.currentTarget.value)) {
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailPattern.test(e.currentTarget.value)) {
         toast({
           variant: "destructive",
           title: "Invalid email address",
