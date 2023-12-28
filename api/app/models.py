@@ -36,6 +36,7 @@ class Task(SQLModel, table=True):
     description: str
     frequency: TaskFrequency = Field(sa_column=Column(Enum(TaskFrequency)))
     space_id: int = Field(default=None, foreign_key="space.id")
+    start_date: int
 
 
 class TaskUser(SQLModel, table=True):
