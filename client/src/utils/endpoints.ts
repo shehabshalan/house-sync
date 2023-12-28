@@ -5,6 +5,8 @@ export const API_ENDPOINTS = {
   USER_ME: "/users/me",
   // Spaces
   SPACES: "/spaces",
+  // Invites
+  SPACE_INVITE: "/spaces/invite",
   // Tasks
   TASKS: "/tasks",
 };
