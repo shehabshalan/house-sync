@@ -15,12 +15,42 @@ import {
 } from "./ui/table";
 import { Button } from "./ui/button";
 import { format } from "date-fns";
+import { useUpdateTaskStatus } from "@/services/useUpdateTaskStatus";
+import { useToast } from "./ui/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
+import { useParams } from "react-router";
+import { useGetUser } from "@/services/useGetUser";
 
 type TaskCardProps = {
   task: Task;
 };
 
 const TaskCard = ({ task }: TaskCardProps) => {
+  const { id } = useParams<{ id: string }>();
+  const { toast } = useToast();
+  const { data: currentUser } = useGetUser();
+  const { mutate, isPending } = useUpdateTaskStatus();
+  const queryClient = useQueryClient();
+
+  const handleUpdateStatus = () => {
+    mutate(task.id, {
+      onSuccess: () => {
+        toast({
+          variant: "default",
+          title: "Marked as complete",
+        });
+        queryClient.invalidateQueries({ queryKey: ["spaces", id] });
+      },
+      onError: (e: Error & { response?: any }) => {
+        toast({
+          variant: "destructive",
+          title: e.response?.data?.detail || "An error occurred",
+          description: "There was a problem with your request. Try again.",
+        });
+      },
+    });
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -52,7 +82,15 @@ const TaskCard = ({ task }: TaskCardProps) => {
                         Completed
                       </Button>
                     ) : (
-                      <Button size="sm">Mark as Complete</Button>
+                      <Button
+                        size="sm"
+                        onClick={handleUpdateStatus}
+                        disabled={
+                          isPending || currentUser?.email !== user.user_email
+                        }
+                      >
+                        Mark as Complete
+                      </Button>
                     )}
                   </TableCell>
                 </TableRow>

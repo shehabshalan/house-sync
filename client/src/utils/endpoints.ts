@@ -9,4 +9,5 @@ export const API_ENDPOINTS = {
   SPACE_INVITE: "/spaces/invite",
   // Tasks
   TASKS: "/tasks",
+  TASKS_STATUS: "/tasks/id/status",
 };
