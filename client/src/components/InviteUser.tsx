@@ -17,34 +17,61 @@ import { useToast } from "./ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router";
 import { useCreateInvites } from "@/services/useCreateInvites";
-import { Command, Mail } from "lucide-react";
+import { Command, Mail, PlusIcon, UserIcon } from "lucide-react";
 import { Badge } from "./ui/badge";
+import { useGetSpaces } from "@/services/useGetSpaces";
+import { useGetUser } from "@/services/useGetUser";
+import { ScrollArea } from "./ui/scroll-area";
 
 const InviteUser = () => {
   const { toast } = useToast();
   const { id } = useParams<{ id: string }>();
+  const { data: spaces } = useGetSpaces();
+  const { data: curretUser } = useGetUser();
   const queryClient = useQueryClient();
   const { mutate, isPending } = useCreateInvites();
   const [emails, setEmails] = useState<string[]>([]);
   const [email, setEmail] = useState("");
+
+  // Get all users from all spaces except the current user
+  const users = spaces?.map((space) => space.users.map((user) => user.email));
+  const allUsers = users?.flat();
+  const allUsersUnique = [...new Set(allUsers)].filter(
+    (user) => user !== curretUser?.email
+  );
 
   const handlSpace = (e: React.ChangeEvent<HTMLInputElement>) => {
     const trimmedEmail = e.target.value.replace(/\s/g, ""); // Remove spaces from email
     setEmail(trimmedEmail);
   };
 
+  const validateUserEntry = (email: string) => {
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) {
+      toast({
+        variant: "destructive",
+        title: "Invalid email address",
+        description: "Please enter a valid email address.",
+      });
+      return false;
+    }
+
+    if (emails.includes(email)) {
+      toast({
+        variant: "destructive",
+        title: "Duplicate email address",
+        description: "Please enter a unique email address.",
+      });
+      return false;
+    }
+
+    return true;
+  };
+
   const handleAddEmail = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && e.currentTarget.value) {
-      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailPattern.test(e.currentTarget.value)) {
-        toast({
-          variant: "destructive",
-          title: "Invalid email address",
-          description: "Please enter a valid email address.",
-        });
-        return;
-      }
-
+      const isValid = validateUserEntry(e.currentTarget.value);
+      if (!isValid) return;
       setEmails([...emails, e.currentTarget.value]);
       setEmail("");
     }
@@ -108,11 +135,12 @@ const InviteUser = () => {
             to add a new email address to the list, and click <b>submit</b> to
             send the invites!
             <br />
-            <br />
-            <b>Note:</b> You can remove an email address by clicking on it.
+            <span className="mt-1">
+              <b>Note:</b> You can remove an email address by clicking on it.
+            </span>
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name" className="text-left">
               Email
@@ -135,6 +163,34 @@ const InviteUser = () => {
               </Badge>
             ))}
           </div>
+          {allUsersUnique?.length > 0 ? (
+            <>
+              <Label htmlFor="name" className="text-left -mt-2">
+                Or select from existing users
+              </Label>
+              <ScrollArea className="max-h-52">
+                {allUsersUnique?.map((user) => (
+                  <div className=" flex items-center space-x-4 rounded-md border p-4">
+                    <UserIcon />
+                    <div className="flex-1 space-y-1">
+                      <p className="text-sm font-medium leading-none">{user}</p>
+                    </div>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={() => {
+                        const isValid = validateUserEntry(user);
+                        if (!isValid) return;
+                        setEmails([...emails, user]);
+                      }}
+                    >
+                      <PlusIcon />
+                    </Button>
+                  </div>
+                ))}
+              </ScrollArea>
+            </>
+          ) : null}
         </div>
         <DialogFooter>
           <DialogClose asChild>
