@@ -7,9 +7,9 @@ def generate_due_dates(start_date, frequency, num_users):
     due_dates = []
     for i in range(num_users):
         due_date = (
-            start_date + timedelta(weeks=i)
+            start_date + timedelta(weeks=i + 1)
             if frequency == TaskFrequency.WEEKLY
-            else start_date + timedelta(weeks=i * 4)
+            else start_date + timedelta(weeks=i * 4 + 4)
         )  # otherwise it is monthly
         due_dates.append(due_date)
     return due_dates

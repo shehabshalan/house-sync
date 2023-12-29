@@ -59,9 +59,15 @@ async def update_task_status(task_id: int, session: Session, user: schemas.User)
         session.exec(select(TaskUser).where(TaskUser.task_id == task_id, TaskUser.is_completed == False)).first()
         is None
     )
+
     if all_completed:
+        users_in_task = session.exec(
+            select(TaskUser).where(TaskUser.task_id == task_id).order_by(TaskUser.user_email)
+        ).all()
+        last_user = users_in_task[-1]
+        last_user_due_date = last_user.due_date + ":00"
         task = session.exec(select(Task).where(Task.id == task_id)).first()
-        start_date = datetime.now(timezone.utc)
+        start_date = datetime.strptime(last_user_due_date, "%Y-%m-%d %H:%M:%S%z")
         num_users = session.exec(select(TaskUser).where(TaskUser.task_id == task_id)).all()
         due_dates = generate_due_dates(start_date, task.frequency, len(num_users))
         for i, user_email in enumerate(
