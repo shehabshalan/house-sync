@@ -74,12 +74,14 @@ const TaskCard = ({ task }: TaskCardProps) => {
                     {user.user_email}
                   </TableCell>
                   <TableCell className="font-medium">
-                    {format(user.due_date, "MM/dd/yyyy")}
+                    {user.due_date !== null
+                      ? format(new Date(user.due_date), "MM/dd/yyyy")
+                      : "Starts next cycle"}
                   </TableCell>
                   <TableCell>
-                    {user.is_completed ? (
+                    {user.is_completed || user.due_date == null ? (
                       <Button size="sm" variant="outline" disabled={true}>
-                        Completed
+                        {user.due_date !== null ? "Completed" : "Not started"}
                       </Button>
                     ) : (
                       <Button
