@@ -5,51 +5,16 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "./ui/table";
-import { Button } from "./ui/button";
-import { format } from "date-fns";
-import { useUpdateTaskStatus } from "@/services/useUpdateTaskStatus";
-import { useToast } from "./ui/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
-import { useParams } from "react-router";
+
 import { useGetUser } from "@/services/useGetUser";
+import TaskMembersTable from "./TaskMembersTable";
 
 type TaskCardProps = {
   task: Task;
 };
 
 const TaskCard = ({ task }: TaskCardProps) => {
-  const { id } = useParams<{ id: string }>();
-  const { toast } = useToast();
   const { data: currentUser } = useGetUser();
-  const { mutate, isPending } = useUpdateTaskStatus();
-  const queryClient = useQueryClient();
-
-  const handleUpdateStatus = () => {
-    mutate(task.id, {
-      onSuccess: () => {
-        toast({
-          variant: "default",
-          title: "Marked as complete",
-        });
-        queryClient.invalidateQueries({ queryKey: ["spaces", id] });
-      },
-      onError: (e: Error & { response?: any }) => {
-        toast({
-          variant: "destructive",
-          title: e.response?.data?.detail || "An error occurred",
-          description: "There was a problem with your request. Try again.",
-        });
-      },
-    });
-  };
 
   return (
     <Card>
@@ -58,47 +23,7 @@ const TaskCard = ({ task }: TaskCardProps) => {
         <CardDescription>{task.description}</CardDescription>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>User</TableHead>
-              <TableHead>Due Date</TableHead>
-              <TableHead>Action</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {task.users.length > 0 &&
-              task.users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-medium">
-                    {user.user_email}
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    {user.due_date !== null
-                      ? format(new Date(user.due_date), "MM/dd/yyyy")
-                      : "Starts next cycle"}
-                  </TableCell>
-                  <TableCell>
-                    {user.is_completed || user.due_date == null ? (
-                      <Button size="sm" variant="outline" disabled={true}>
-                        {user.due_date !== null ? "Completed" : "Not started"}
-                      </Button>
-                    ) : (
-                      <Button
-                        size="sm"
-                        onClick={handleUpdateStatus}
-                        disabled={
-                          isPending || currentUser?.email !== user.user_email
-                        }
-                      >
-                        Mark as Complete
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
+        <TaskMembersTable task={task} currentUser={currentUser} />
       </CardContent>
     </Card>
   );
