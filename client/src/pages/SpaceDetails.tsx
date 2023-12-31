@@ -4,6 +4,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { useParams } from "react-router";
 import { useGetSpaceDetails } from "@/services/useGetSpaceDetails";
 import Loading from "@/components/Loading";
+import ShoppingList from "@/components/ShoppingList";
 
 const SpaceDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -21,6 +22,7 @@ const SpaceDetails = () => {
           {space?.tasks?.map((task) => (
             <TaskCard key={task.id} task={task} />
           ))}
+          <ShoppingList />
         </>
       )}
     </DashboardLayout>
