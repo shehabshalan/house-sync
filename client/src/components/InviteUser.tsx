@@ -170,7 +170,10 @@ const InviteUser = () => {
               </Label>
               <ScrollArea className="max-h-52">
                 {allUsersUnique?.map((user) => (
-                  <div className=" flex items-center space-x-4 rounded-md border p-4">
+                  <div
+                    className=" flex items-center space-x-4 rounded-md border p-4"
+                    key={user}
+                  >
                     <UserIcon />
                     <div className="flex-1 space-y-1">
                       <p className="text-sm font-medium leading-none">{user}</p>

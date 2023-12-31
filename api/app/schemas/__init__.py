@@ -52,3 +52,23 @@ class CreateTask(BaseModel):
 
 class GetTask(CreateTask):
     id: int
+
+
+class GetShoppingList(BaseModel):
+    id: int
+    item: str
+    quantity: int
+    space_id: int
+    is_purshased: bool
+    purchased_by: str
+
+
+class CreateItem(BaseModel):
+    item: str
+    quantity: int
+    space_id: int
+
+
+class UpdateItem(BaseModel):
+    is_purchased: bool
+    purchased_by: str

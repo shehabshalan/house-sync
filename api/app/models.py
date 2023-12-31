@@ -45,3 +45,12 @@ class TaskUser(SQLModel, table=True):
     user_email: str = Field(default=None, foreign_key="user.email")
     is_completed: bool = False
     due_date: Optional[str] = None
+
+
+class ShoppingList(SQLModel, table=True):
+    id: Optional[int] = Field(primary_key=True, index=True)
+    item: str
+    quantity: int
+    is_purchased: bool = False
+    purchased_by: Optional[str] = None
+    space_id: int = Field(default=None, foreign_key="space.id")

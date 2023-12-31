@@ -36,3 +36,12 @@ interface Task {
 interface SpaceDetails extends Space {
   tasks: Task[];
 }
+
+interface ShoppingItem {
+  id: number;
+  item: string;
+  quantity: number;
+  is_purchased: boolean;
+  space_id: number;
+  purchased_by: string;
+}

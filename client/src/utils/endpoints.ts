@@ -10,4 +10,7 @@ export const API_ENDPOINTS = {
   // Tasks
   TASKS: "/tasks",
   TASKS_STATUS: "/tasks/id/status",
+  // Shopping Lists
+  SHOPPING_LIST: "/shopping",
+  SHOPPING_ITEM_STATUS: "/shopping/id/status",
 };
