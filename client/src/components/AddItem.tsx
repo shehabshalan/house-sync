@@ -24,7 +24,7 @@ const AddItem = () => {
   const { mutate, isPending } = useCreateItem();
   const [form, setForm] = useState({
     item: "",
-    quantity: 0,
+    quantity: "",
   });
 
   const handleSubmit = () => {
@@ -38,7 +38,8 @@ const AddItem = () => {
     }
 
     const payload = {
-      ...form,
+      item: form.item,
+      quantity: Number(form.quantity),
       space_id: Number(id),
     };
 
@@ -46,7 +47,7 @@ const AddItem = () => {
       onSuccess: () => {
         setForm({
           item: "",
-          quantity: 0,
+          quantity: "",
         });
         toast({
           variant: "default",
@@ -97,9 +98,7 @@ const AddItem = () => {
               id="quantity"
               value={form.quantity}
               className="col-span-6"
-              onChange={(e) =>
-                setForm({ ...form, quantity: Number(e.target.value) })
-              }
+              onChange={(e) => setForm({ ...form, quantity: e.target.value })}
               type="number"
             />
           </div>
